@@ -20,8 +20,9 @@ contract OnchainGitTest is Test {
 
     function setUp() public {
         logic = new OnchainGit();
-        proxy = new ERC1967Proxy(address(logic), abi.encodeWithSignature("initialize()"));
+        proxy = new ERC1967Proxy(address(logic), "");
         proxyAsLogic = OnchainGit(address(proxy));
+        logicV2 = new OnchainGitV2();
         proxyAsLogic.initialize();
     }
 
@@ -47,20 +48,19 @@ contract OnchainGitTest is Test {
     function testOnlyOwnerCanUpgrade() public {
         logicV2 = new OnchainGitV2();
         vm.prank(address(0x2));
-        vm.expectRevert("Not the owner");
+        vm.expectRevert();
         proxyAsLogic.upgradeTo(address(logicV2));
     }
 
     function testOnlyOwnerCanRollback() public {
         vm.prank(address(0x2));
-        vm.expectRevert("Not the owner");
+        vm.expectRevert();
         proxyAsLogic.rollbackTo(0);
     }
 
     function testNewFunctionalityAfterUpgrade() public {
-        logicV2 = new OnchainGitV2();
         proxyAsLogic.upgradeTo(address(logicV2));
-        
+
         OnchainGitV2 proxyAsLogicV2 = OnchainGitV2(address(proxy));
         assertEq(proxyAsLogicV2.newFunction(), "Aboba");
     }

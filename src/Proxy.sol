@@ -7,12 +7,15 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract OnchainGitProxy is ERC1967Proxy {
-    constructor(address _logic, bytes memory _data) ERC1967Proxy(_logic, _data) {}
+    constructor(
+        address _logic,
+        bytes memory _data
+    ) ERC1967Proxy(_logic, _data) {}
 }
 
 contract OnchainGit is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     address[] public versionHistory;
-    
+
     address public currentVersion;
 
     event Upgraded(address indexed newImplementation);
@@ -25,7 +28,12 @@ contract OnchainGit is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         currentVersion = address(this);
     }
 
-    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {
+    function _authorizeUpgrade(
+        address newImplementation
+    ) internal override onlyOwner {}
+
+    function upgradeTo(address newImplementation) external onlyOwner {
+        _authorizeUpgrade(newImplementation);
         versionHistory.push(newImplementation);
         currentVersion = newImplementation;
         emit Upgraded(newImplementation);
@@ -33,6 +41,7 @@ contract OnchainGit is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
     function rollbackTo(uint256 versionIndex) external onlyOwner {
         require(versionIndex < versionHistory.length, "Invalid version index");
+        _authorizeUpgrade(currentVersion);
         currentVersion = versionHistory[versionIndex];
         emit RolledBack(currentVersion);
     }
